@@ -19,22 +19,28 @@ motor = Motor()
 #fig = plt.figure(figsize = (2, 2))
 #ax = fig.add_subplot(111)
 
-while True:
-    dist = distance.getDistance()
+try:
+    while True:
+        dist = distance.getDistance()
     
-    if dist < 10:
-        led.on(Led.BLUE)
-        motor.StopMotors()
-    else:
-        led.off(Led.BLUE)
-        motor.Forwards()
+        if dist < 10:
+            led.on(Led.BLUE)
+            motor.StopMotors()
+        else:
+            led.off(Led.BLUE)
+            motor.Forwards()
     
-    #img = c.capture()
-    #ax.imshow(img)
-    #fig.canvas.draw()
-    motion = camera.detect_motion()
+        #img = c.capture()
+        #ax.imshow(img)
+        #fig.canvas.draw()
+        motion = camera.detect_motion()
     
-    if motion: led.on(Led.RED)
-    else: led.off(Led.RED)
+        if motion: led.on(Led.RED)
+        else: led.off(Led.RED)
     
-    #time.sleep(0.5)
+        #time.sleep(0.5)
+
+
+# If you press CTRL+C, cleanup and stop
+except KeyboardInterrupt:
+    print("Bye!")
