@@ -3,6 +3,8 @@ import picamera.array
 import numpy as np
 import time
 import io
+import socket
+import struct
 import logging
 from PIL import Image
 from PIL import ImageChops
@@ -12,7 +14,7 @@ class Camera:
     
     def __init__(self):
         self.camera = picamera.PiCamera()
-        self.camera.resolution = (100, 100)
+        self.camera.resolution = (160, 100)
         self.camera.start_preview()
         
         #self.stream = picamera.array.PiYUVArray(self.camera)
@@ -23,7 +25,16 @@ class Camera:
         self.prior_image = None
         self.threshold = 200
         
+#        self.client_socket = socket.socket()
+#        self.client_socket.connect(('192.168.2.4', 8000))
+#        self.connection = self.client_socket.makefile('wb')
         
+        
+#    def __del__(self):
+#        self.connection.close()
+#        self.client_socket.close()
+            
+            
     def capture(self):
         #self.stream.truncate()
         #self.stream.seek(0)
@@ -33,6 +44,16 @@ class Camera:
 
         stream = io.BytesIO()
         self.camera.capture(stream, format='jpeg', use_video_port=True)
+        
+        # Write the length of the capture to the stream and flush to ensure it actually gets sent
+#        self.connection.write(struct.pack('<L', stream.tell()))
+#        self.connection.flush()
+        # Rewind the stream and send the image data over the wire
+#        stream.seek(0)
+#        self.connection.write(stream.read())
+        # Write the terminating 0-length to the connection to let the server know we're done
+        #self.connection.write(struct.pack('<L', 0))
+        
         stream.seek(0)
         return Image.open(stream)
 
