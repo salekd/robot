@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO # Import the GPIO Library
 import time # Import the Time library
+import logging
 
 class Distance:
 
@@ -37,11 +38,14 @@ class Distance:
         GPIO.output(self.pinTrigger, False)
 
         # Start the timer
-        StartTime = time.time()
-
+        StartTime = StopTime = time.time()
+        
         # The start time is reset until the Echo pin is taken high (==1)
         while GPIO.input(self.pinEcho)==0:
             StartTime = time.time()
+            if StartTime-StopTime >= 0.04:
+                logging.warning("Echo pin remains low.")
+                break
 
         # Stop when the Echo pin is no longer high - the end time
         while GPIO.input(self.pinEcho)==1:
@@ -50,7 +54,7 @@ class Distance:
             # see the echo quickly enough, so we have to detect that
             # problem and say what has happened.
             if StopTime-StartTime >= 0.04:
-                print("Hold on there!  You're too close for me to see.")
+                logging.warning("Hold on there!  You're too close for me to see.")
                 StopTime = StartTime
                 break
 
@@ -64,6 +68,6 @@ class Distance:
         # That was the distance there and back so halve the value
         Distance = Distance / 2
 
-        print("Distance : %.1f cm" % Distance)
+        logging.debug("Distance : %.1f cm" % Distance)
 
         return Distance
