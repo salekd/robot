@@ -22,6 +22,8 @@ class Led:
         GPIO.setup(self.pinBlue, GPIO.OUT)
         GPIO.setup(self.pinRed, GPIO.OUT)
 
+        GPIO.output(self.pinBlue, GPIO.LOW)
+        GPIO.output(self.pinRed, GPIO.LOW)
 
     def __del__(self):
         # Reset GPIO settings
@@ -29,16 +31,19 @@ class Led:
         
         
     def on(self, mask = 0b11):
+        """Turn on the LEDs based on a binary mask."""
         if mask & self.BLUE: GPIO.output(self.pinBlue, GPIO.HIGH)
         if mask & self.RED: GPIO.output(self.pinRed, GPIO.HIGH)
 
 
     def off(self, mask = 0b11):
+        """Turn off the LEDs based on a binary mask."""
         if mask & self.BLUE: GPIO.output(self.pinBlue, GPIO.LOW)
         if mask & self.RED: GPIO.output(self.pinRed, GPIO.LOW)
 
 
     def blink(self, mask = 0b11):
+        """Blink based on a binary mask."""
         self.on(mask)
         time.sleep(0.1)
         self.off(mask)

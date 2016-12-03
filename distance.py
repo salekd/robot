@@ -31,6 +31,7 @@ class Distance:
         
         
     def getDistance(self):
+        """Returns the distance from an object."""
 
         # Send 10us pulse to trigger
         GPIO.output(self.pinTrigger, True)
@@ -54,7 +55,7 @@ class Distance:
             # see the echo quickly enough, so we have to detect that
             # problem and say what has happened.
             if StopTime-StartTime >= 0.04:
-                logging.warning("Hold on there!  You're too close for me to see.")
+                logging.warning("Hold on there! You're too close for me to see.")
                 StopTime = StartTime
                 break
 

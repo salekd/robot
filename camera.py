@@ -14,7 +14,10 @@ class Camera:
     
     def __init__(self):
         self.camera = picamera.PiCamera()
-        self.camera.resolution = (160, 100)
+        #self.camera.resolution = (80, 50)
+        self.camera.resolution = (800, 500)
+        self.camera.hflip = True
+        self.camera.vflip = True
         self.camera.start_preview()
         
         #self.stream = picamera.array.PiYUVArray(self.camera)
@@ -55,10 +58,15 @@ class Camera:
         #self.connection.write(struct.pack('<L', 0))
         
         stream.seek(0)
+        # Return image in the PIL format
         return Image.open(stream)
 
 
     def detect_motion(self):
+        """
+        Returns true if a motion is detected.
+        For the motion detection, a snapshot is taken first and and compared to the previous one.
+        """
         
         # Take new snapshot
         current_image = self.capture()
@@ -83,4 +91,5 @@ class Camera:
 
 
 def PIL2array(img):
+    """Helper function to convert PIL images to numpy array"""
     return np.array(img.getdata(), np.uint8).reshape(img.size[1], img.size[0], 3)
