@@ -49,6 +49,11 @@ class Motor:
         GPIO.cleanup()
         
 
+    def SetDutyCycle(self, dutyCycleA, dutyCycleB):
+        self.DutyCycleA = dutyCycleA
+        self.DutyCycleB = dutyCycleB
+
+
     # Turn all motors off
     def StopMotors(self):
         self.pwmMotorAForwards.ChangeDutyCycle(self.Stop)

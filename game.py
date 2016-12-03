@@ -41,7 +41,8 @@ def main():
         
         
         dist = distance.getDistance()    
-        if dist < 10:
+        print("Distance : %.1f cm" % dist)
+        if dist < 30:
             led.on(Led.BLUE)
             if direction == UP: direction = STOP
         else:

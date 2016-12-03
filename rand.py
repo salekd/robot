@@ -26,26 +26,38 @@ try:
         print("Distance : %.1f cm" % dist)
         if dist < 30:
             led.on(Led.BLUE)
-            if direction == UP:
+        else:
+            led.off(Led.BLUE)
+
+        if direction == UP:
+            if dist < 30:
                 direction = DOWN
                 duration = 30
                 timer = 0
+                motor.SetDutyCycle(30, 30)
                 motor.Backwards()
-        else:
-            led.off(Led.BLUE)
+            elif dist < 60:
+                motor.SetDutyCycle(30, 30)
+                motor.Forwards()
 
 
         if duration == timer:
             if direction == UP or direction == DOWN:
-                direction = int(random.random()*2)
-                duration = int(random.random()*50) + 1
+                direction = int(random.random() * 2)
+                duration = int(random.random() * 50) + 1
             else:
                 direction = UP
                 duration = 100
             timer = 0
-            if direction == UP: motor.Forwards()
-            elif direction == LEFT: motor.Left()
-            elif direction == RIGHT: motor.Right()
+            if direction == UP:
+                motor.SetDutyCycle(60, 60)
+                motor.Forwards()
+            elif direction == LEFT:
+                motor.SetDutyCycle(30, 30)
+                motor.Left()
+            elif direction == RIGHT:
+                motor.SetDutyCycle(30, 30)
+                motor.Right()
 
         time.sleep(0.1)
         timer = timer + 1
