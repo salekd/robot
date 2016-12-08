@@ -4,6 +4,14 @@ import cv2
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import time
+import re
+import os
+from sklearn.linear_model import LogisticRegression
+from sklearn.externals import joblib
+
+
 
 minSize = (20, 20)
 imageScale = 1
@@ -14,10 +22,14 @@ haarFlags = cv.CV_HAAR_DO_CANNY_PRUNING
 cdir = "/usr/share/opencv/haarcascades/"
 cascade = cv.Load(cdir + "haarcascade_frontalface_default.xml")
 
-def find_faces(pil_image):
+
+
+def find_faces(pil_image, save=False):
     """
     Returns an array of identified faces.
     Each face is represented as an 48x48 array of 8-bit integers.
+
+    It is possible to save the identified faces as png images.
     """
 
     # convert from PIL to OpenCV
@@ -66,4 +78,77 @@ def find_faces(pil_image):
             #ax.imshow(face_img, cmap='gray')
 #            fig.canvas.draw()
 
+    # save the faces
+    if save:
+        for array in face_array:
+            s = int(time.time())
+            mpimg.imsave('faces/img%4d.png'%s, array, cmap="gray")
+
     return face_array
+
+
+
+def read_faces():
+    """
+    Returns image data of all faces stored in individual directories for each person.
+    Each face is represented as an 48x48 array of 8-bit integers and a string label.
+    """
+
+    # initialize arrays for image data and labels
+    X = np.empty((0,2304), dtype=np.uint8)
+    y = np.empty((0), dtype=np.uint8)
+
+    #subfolders = [f.path for f in os.scandir(os.curdir) if f.is_dir() ]
+    subfolders = filter(os.path.isdir, os.listdir(os.curdir))
+    tag_directories = filter(lambda x: re.match("tag_.*", x), subfolders)
+
+    for d in tag_directories:
+        tag = d[4:]
+
+        #files = filter(os.path.isfile, os.listdir(d))
+        files = os.listdir(d)
+        for f in files:
+            img = mpimg.imread(d + '/' + f)
+            lum_img = img[:,:,0]
+            arr = np.array( lum_img*256, dtype=np.uint8 )
+
+            X = np.append(X, np.array([arr.flatten()]), axis=0)
+            y = np.append(y, tag)
+
+    return X, y
+
+
+
+def train_classifier(X, y):
+    """
+    Returns a trained classifier
+    """
+
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    return clf
+
+
+
+def save_classifier(filename='clf.pkl'):
+    joblib.dump(clf, filename)
+
+
+
+def read_classifier(filename='clf.pkl'):
+    return joblib.load(filename)
+
+
+
+def identify_faces(faces, clf):
+    """
+    Identifies persons using a trained classifier
+    """
+
+    X = np.empty((0,2304), dtype=np.uint8)
+    for face in faces:
+        X = np.append(X, np.array([face.flatten()]), axis=0)
+
+    print clf.predict(X)
+    print clf.predict_proba(X)
