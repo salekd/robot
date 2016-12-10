@@ -1,3 +1,3 @@
-# robot
-Raspberry Pi Robot
-![Raspberry Pi Robot image](http://github.com/salekd/robot/robot.jpg)
+# Raspberry Pi robot
+
+![Raspberry Pi robot image](https://github.com/salekd/robot/blob/master/robot.jpg)
