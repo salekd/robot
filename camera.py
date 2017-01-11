@@ -65,7 +65,7 @@ class Camera:
     def detect_motion(self):
         """
         Returns true if a motion is detected.
-        For the motion detection, a snapshot is taken first and and compared to the previous one.
+        For the motion detection, a snapshot is taken first and compared to the previous one.
         """
         
         # Take new snapshot
