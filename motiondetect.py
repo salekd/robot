@@ -6,6 +6,7 @@ import matplotlib.image as mpimg
 import numpy as np
 from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth
+import urllib
 import logging, sys
 import time
 
@@ -16,10 +17,15 @@ logging.basicConfig( stream=sys.stderr, level=logging.DEBUG )
 
 
 
+# Threshold for the mean-squared error (expected value witout motion is around 10)
+threshold1 = 15
+# Threshold for coutning the number of pixels that changed
+threshold2 = 50
+# Threshold for the fraction of pixels that changed (in percent) 
+threshold3 = 5
+
 prior_image = None
 prior_timestamp = time.time()
-
-threshold = 100
 
 img_array = []
 filename_array = []
@@ -109,26 +115,44 @@ try:
         if prior_image is None: prior_image = current_image
 
         # Mean squared error
-        img1 = current_image
-        img2 = prior_image
-        mse = np.sum((img1 - img2)**2)
-        mse /= img1.shape[0] * img1.shape[1]
+        img1 = np.array(current_image).flatten()
+        img2 = np.array(prior_image).flatten()
+        diff2 = (img1 - img2)**2
+        mse = float(np.sum(diff2)) / len(diff2)
+        #mse = np.sum(diff2)
+        #mse /= img1.shape[0] * img1.shape[1]
 
-        logging.debug( "Mean squared error between the two images: %d" % mse )
+        frac = float(np.sum(diff2 > threshold2)) / len(diff2) * 100.
+        #frac = np.sum(diff2 > threshold2) / len(diff2)
+
+        #motion = mse > threshold1
+        motion = frac > threshold3
+
+        logging.debug( "Mean squared error between the two images: %.1f" % mse )
+        logging.debug( "Fraction of pixels with squared difference above threshold: %.1f%%" % frac )
 
         # Is motion detected?
-        if mse > threshold:
+        if motion:
             timestr = time.strftime("%Y_%m_%d_%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
-            filename = timestr + "_mse%d.jpg"%mse
+            filename = timestr + "_mse%.1f_frac%.1f.jpg"%(mse, frac)
             filename_array.append(filename)
 
             img = Image.fromarray(current_image)
             img_array.append(img)
 
-            logging.debug( "Motion detected, filename = %s" % filename )
+            logging.debug( "Motion detected, filename: %s" % filename )
 
-        # Save the images after motion is no longer detected:
-        elif len(filename_array):
+        # Send message to Triggi once motion is no longer detected:
+        if not motion and len(filename_array):
+            timestr = time.strftime("%H:%M:%S", time.localtime(current_timestamp))
+            params = urllib.urlencode({'value': 'motion detected at %s'%timestr})
+            urllib.urlopen("https://connect.triggi.com/c/BByu1SmuHezfDWheA0WR?%s"%params)
+
+            logging.debug( "Sending message to Triggi" )
+
+        # Save the images once motion is no longer detected:
+        #elif len(filename_array):
+        if (not motion and len(filename_array)) or len(filename_array) > 10:
             for img, filename in zip(img_array, filename_array):
                 img.save("motiondetect/"+filename, "JPEG", quality=80, optimize=True, progressive=True)
 
@@ -147,7 +171,7 @@ try:
             ax.imshow(current_image)
             fig.canvas.draw()
         except:
-            logging.debug( "Cannot show image, no figure is defined." )
+            pass
 
         logging.debug( "Elapsed time: %.3fs" % (current_timestamp - prior_timestamp) )
 
