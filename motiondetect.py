@@ -9,6 +9,7 @@ from pydrive.auth import GoogleAuth
 import urllib
 import logging, sys
 import time
+import os
 
 
 
@@ -22,10 +23,11 @@ threshold1 = 15
 # Threshold for coutning the number of pixels that changed
 threshold2 = 50
 # Threshold for the fraction of pixels that changed (in percent) 
-threshold3 = 5
+threshold3 = 8.3
 
 prior_image = None
 prior_timestamp = time.time()
+daydir = time.strftime("%Y_%m_%d", time.localtime(prior_timestamp))
 
 img_array = []
 filename_array = []
@@ -67,15 +69,31 @@ file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList
 for file1 in file_list:
     print('title: %s, id: %s' % (file1['title'], file1['id']))
     if file1['title'] == "motiondetect":
+        gid0 = file1['id']
+
+try:
+    gid0
+except:
+    file1 = drive.CreateFile({'title': "motiondetect", "mimeType": "application/vnd.google-apps.folder"})
+    file1.Upload()
+    gid0 = file1['id']
+
+# Auto-iterate through all files that matches this query
+file_list = drive.ListFile({'q': "'%s' in parents and trashed=false"%gid0}).GetList()
+for file1 in file_list:
+    print('title: %s, id: %s' % (file1['title'], file1['id']))
+    if file1['title'] == daydir:
         gid = file1['id']
 
 try:
     gid
 except:
-    file1 = drive.CreateFile({'title': "motiondetect", "mimeType": "application/vnd.google-apps.folder"})
+    file1 = drive.CreateFile({'title': daydir, "mimeType": "application/vnd.google-apps.folder", "parents": [{"kind": "drive#fileLink","id": gid0}]})
     file1.Upload()
     gid = file1['id']
 
+os.system("mkdir motiondetect/%s"%daydir)
+    
 
 
 ########
@@ -133,7 +151,8 @@ try:
 
         # Is motion detected?
         if motion:
-            timestr = time.strftime("%Y_%m_%d_%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
+            #timestr = time.strftime("%Y_%m_%d_%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
+            timestr = time.strftime("%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
             filename = timestr + "_mse%.1f_frac%.1f.jpg"%(mse, frac)
             filename_array.append(filename)
 
@@ -154,10 +173,10 @@ try:
         #elif len(filename_array):
         if (not motion and len(filename_array)) or len(filename_array) > 10:
             for img, filename in zip(img_array, filename_array):
-                img.save("motiondetect/"+filename, "JPEG", quality=80, optimize=True, progressive=True)
+                img.save("motiondetect/"+daydir+"/"+filename, "JPEG", quality=80, optimize=True, progressive=True)
 
                 f = drive.CreateFile({'title': filename, "parents":  [{"kind": "drive#fileLink","id": gid}]})
-                f.SetContentFile("motiondetect/"+filename)
+                f.SetContentFile("motiondetect/"+daydir+"/"+filename)
                 f.Upload()
 
                 logging.debug( "Saved file %s" % filename )
