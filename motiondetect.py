@@ -32,6 +32,9 @@ daydir = time.strftime("%Y_%m_%d", time.localtime(prior_timestamp))
 img_array = []
 filename_array = []
 
+buff = np.empty(shape=[0, 1])
+index = 0
+
 
 
 ########
@@ -140,20 +143,37 @@ try:
         #mse = np.sum(diff2)
         #mse /= img1.shape[0] * img1.shape[1]
 
-        frac = float(np.sum(diff2 > threshold2)) / len(diff2) * 100.
-        #frac = np.sum(diff2 > threshold2) / len(diff2)
+        #frac = float(np.sum(diff2 > threshold2)) / len(diff2) * 100.
+        ##frac = np.sum(diff2 > threshold2) / len(diff2)
 
         #motion = mse > threshold1
-        motion = frac > threshold3
+        #motion = frac > threshold3
 
-        logging.debug( "Mean squared error between the two images: %.1f" % mse )
-        logging.debug( "Fraction of pixels with squared difference above threshold: %.1f%%" % frac )
+        logging.debug( "Mean squared error between the two images: %.4f" % mse )
+        #logging.debug( "Fraction of pixels with squared difference above threshold: %.1f%%" % frac )
+
+        if buff.shape[0] < 100:
+            buff = np.append(buff, mse)
+        else:
+            buff[index] = mse
+        m = np.mean(buff)
+        s = np.std(buff)
+        mse_scaled = (mse - m) / s
+
+        logging.debug( "Mean and std of the last %d MSE: %.4f, %.4f" % (buff.shape[0], m, s) )
+        logging.debug( "Rescaled MSE: %.4f" % mse_scaled )
+
+        index = index + 1
+        if index == 100: index = 0
+
+        motion = abs(mse_scaled) > 5.
 
         # Is motion detected?
         if motion:
             #timestr = time.strftime("%Y_%m_%d_%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
             timestr = time.strftime("%H_%M_%S.{}".format(mlsec), time.localtime(current_timestamp))
-            filename = timestr + "_mse%.1f_frac%.1f.jpg"%(mse, frac)
+            #filename = timestr + "_mse%.1f_frac%.1f.jpg"%(mse, frac)
+            filename = timestr + "_mse%.1f.jpg"%(mse_scaled)
             filename_array.append(filename)
 
             img = Image.fromarray(current_image)
